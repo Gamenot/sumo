@@ -61,15 +61,16 @@ const double GNEEdge::SNAP_RADIUS_SQUARED = (SUMO_const_halfLaneWidth* SUMO_cons
 
 GNEEdge::GNEEdge(GNENet* net, NBEdge* nbe, bool wasSplit, bool loaded):
     GNENetworkElement(net, nbe->getID(), GLO_EDGE, SUMO_TAG_EDGE, {
-        net->getAttributeCarriers()->retrieveJunction(nbe->getFromNode()->getID()),
-        net->getAttributeCarriers()->retrieveJunction(nbe->getToNode()->getID())},
-        {}, {}, {}, {}, {}),
-    myNBEdge(nbe),
-    myLanes(0),
-    myAmResponsible(false),
-    myWasSplit(wasSplit),
-    myConnectionStatus(loaded ? FEATURE_LOADED : FEATURE_GUESSED),
-    myUpdateGeometry(true) {
+    net->getAttributeCarriers()->retrieveJunction(nbe->getFromNode()->getID()),
+        net->getAttributeCarriers()->retrieveJunction(nbe->getToNode()->getID())
+},
+{}, {}, {}, {}, {}),
+myNBEdge(nbe),
+myLanes(0),
+myAmResponsible(false),
+myWasSplit(wasSplit),
+myConnectionStatus(loaded ? FEATURE_LOADED : FEATURE_GUESSED),
+myUpdateGeometry(true) {
     // Create lanes
     int numLanes = myNBEdge->getNumLanes();
     myLanes.reserve(numLanes);
@@ -172,7 +173,7 @@ GNEEdge::getPositionInView() const {
 GNEMoveOperation*
 GNEEdge::getMoveOperation() {
     // get snapRadius
-    const double snapRadius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.edgeGeometryPointRadius;
+    const double snapRadius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.edgeGeometryPointRadius;
     // check if edge is selected
     if (isAttributeCarrierSelected()) {
         // check if both junctions are selected
@@ -593,7 +594,7 @@ GNEEdge::getBackDownShapePosition() const {
 }
 
 void
-GNEEdge::remakeGNEConnections() {
+GNEEdge::remakeGNEConnections(bool junctionsReady) {
     // create new and removed unused GNEConnections
     const std::vector<NBEdge::Connection>& connections = myNBEdge->getConnections();
     // create a vector to keep retrieved and created connections
@@ -602,7 +603,9 @@ GNEEdge::remakeGNEConnections() {
     for (const auto& connection : connections) {
         // retrieve existent GNEConnection, or create it
         GNEConnection* retrievedGNEConnection = retrieveGNEConnection(connection.fromLane, connection.toEdge, connection.toLane);
-        retrievedGNEConnection->updateLinkState();
+        if (junctionsReady) {
+            retrievedGNEConnection->updateLinkState();
+        }
         retrievedConnections.push_back(retrievedGNEConnection);
         // check if previously this GNEConnections exists, and if true, remove it from myGNEConnections
         std::vector<GNEConnection*>::iterator retrievedExists = std::find(myGNEConnections.begin(), myGNEConnections.end(), retrievedGNEConnection);
@@ -1390,8 +1393,8 @@ GNEEdge::drawDottedContourEdge(const GUIDottedGeometry::DottedContourType type, 
         const GNELane* topLane =  lefthand ? edge->getLanes().back() : edge->getLanes().front();
         const GNELane* botLane = lefthand ? edge->getLanes().front() : edge->getLanes().back();
         // obtain a copy of both geometries
-        GUIDottedGeometry dottedGeometryTop(s, topLane->getLaneShape(), false);
-        GUIDottedGeometry dottedGeometryBot(s, botLane->getLaneShape(), false);
+        GUIDottedGeometry dottedGeometryTop(s, topLane->getLaneGeometry().getShape(), false);
+        GUIDottedGeometry dottedGeometryBot(s, botLane->getLaneGeometry().getShape(), false);
         // obtain both LaneDrawingConstants
         GNELane::LaneDrawingConstants laneDrawingConstantsFront(s, topLane);
         GNELane::LaneDrawingConstants laneDrawingConstantsBack(s, botLane);
@@ -1444,6 +1447,28 @@ GNEEdge::isConvexAngle() const {
     return edgeAngle >= 0 && edgeAngle < 180;
 }
 
+
+bool
+GNEEdge::hasPredecessors() const {
+    // get incoming edges
+    const auto incomingEdges = getFromJunction()->getGNEIncomingEdges();
+    // iterate over connections
+    for (const auto &incomingEdge : incomingEdges) {
+        for (const auto &connection : incomingEdge->getGNEConnections()) {
+            if (connection->getEdgeTo() == this) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool 
+GNEEdge::hasSuccessors() const {
+    return (myGNEConnections.size() > 0);
+}
+
 // ===========================================================================
 // private
 // ===========================================================================
@@ -1492,10 +1517,6 @@ GNEEdge::StackDemandElements::getDemandElements() const {
 
 void
 GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
-    // get template editor
-    GNEInspectorFrame::TemplateEditor* templateEditor = myNet->getViewNet()->getViewParent()->getInspectorFrame()->getTemplateEditor();
-    // check if we have to update template
-    const bool updateTemplate = templateEditor->getEdgeTemplate() ? (templateEditor->getEdgeTemplate()->getID() == getID()) : false;
     switch (key) {
         case SUMO_ATTR_ID:
             myNet->getAttributeCarriers()->updateEdgeID(this, value);
@@ -1647,9 +1668,11 @@ GNEEdge::setAttribute(SumoXMLAttr key, const std::string& value) {
         default:
             throw InvalidArgument(getTagStr() + " doesn't have an attribute of type '" + toString(key) + "'");
     }
-    // update template
-    if (updateTemplate) {
-        templateEditor->setEdgeTemplate(this);
+    // get template editor
+    GNEInspectorFrame::TemplateEditor* templateEditor = myNet->getViewNet()->getViewParent()->getInspectorFrame()->getTemplateEditor();
+    // check update template
+    if (templateEditor->getEdgeTemplate() && (templateEditor->getEdgeTemplate()->getID() == getID())) {
+        myNet->getViewNet()->getViewParent()->getInspectorFrame()->getTemplateEditor()->updateEdgeTemplate();
     }
     // invalidate path calculator
     myNet->getPathManager()->getPathCalculator()->invalidatePathCalculator();

@@ -132,10 +132,6 @@ public:
         /// @brief The lateral offset from the center of the entering lane
         const double latOffset;
 
-    private:
-        /// invalidated assignment operator
-        ApproachingVehicleInformation& operator=(const ApproachingVehicleInformation& s) = delete;
-
     };
 
     typedef std::map<const SUMOVehicle*, const ApproachingVehicleInformation, ComparatorNumericalIdLess> ApproachInfos;
@@ -250,12 +246,13 @@ public:
      * @param[in] decel The maximum deceleration of the checking vehicle
      * @param[in] waitingTime The waiting time of the checking vehicle
      * @param[in] collectFoes If a vector is passed the return value is always False, instead all blocking foes are collected and inserted into this vector
+     * @param[in] lastWasContRed Whether the link which is checked, is an internal junction link where the entry has red
      * @return Whether this link is blocked
      * @note Since this needs to be called without a SUMOVehicle (TraCI), we cannot simply pass the checking vehicle itself
      **/
     bool blockedAtTime(SUMOTime arrivalTime, SUMOTime leaveTime, double arrivalSpeed, double leaveSpeed,
                        bool sameTargetLane, double impatience, double decel, SUMOTime waitingTime,
-                       BlockingFoes* collectFoes = nullptr, const SUMOTrafficObject* ego = nullptr) const;
+                       BlockingFoes* collectFoes = nullptr, const SUMOTrafficObject* ego = nullptr, bool lastWasContRed = false) const;
 
 
     bool isBlockingAnyone() const {
@@ -440,8 +437,8 @@ public:
     /// @brief whether this is a link past an internal junction which currently has priority
     bool lastWasContMajor() const;
 
-    /// @brief whether this is a link past an internal junction which currently has green major
-    bool lastWasContMajorGreen() const;
+    /// @brief whether this is a link past an internal junction where the entry to the junction currently has the given state
+    bool lastWasContState(LinkState linkState) const;
 
     /** @brief Returns the cumulative length of all internal lanes after this link
      *  @return sum of the lengths of all internal lanes following this link

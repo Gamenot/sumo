@@ -33,15 +33,16 @@
 #include <microsim/MSNet.h>
 #include <microsim/MSEdge.h>
 #include <microsim/MSLane.h>
-#include "MSPerson.h"
 #include <microsim/transportables/MSTransportableControl.h>
 #include <microsim/MSInsertionControl.h>
 #include <microsim/MSEventControl.h>
 #include <microsim/MSVehicle.h>
 #include <microsim/MSVehicleControl.h>
 #include <microsim/MSStoppingPlace.h>
+#include <microsim/MSRouteHandler.h>
 #include <microsim/devices/MSDevice_Tripinfo.h>
 #include <microsim/devices/MSDevice_Taxi.h>
+#include "MSPerson.h"
 #include "MSPModel.h"
 
 // ===========================================================================
@@ -54,8 +55,9 @@ MSPerson::MSPersonStage_Walking::MSPersonStage_Walking(const std::string& person
         const ConstMSEdgeVector& route,
         MSStoppingPlace* toStop,
         SUMOTime walkingTime, double speed,
-        double departPos, double arrivalPos, double departPosLat, int departLane) :
-    MSStageMoving(route, toStop, speed, departPos, arrivalPos, departPosLat, departLane, MSStageType::WALKING),
+        double departPos, double arrivalPos, double departPosLat, int departLane,
+        const std::string& routeID) :
+    MSStageMoving(route, routeID, toStop, speed, departPos, arrivalPos, departPosLat, departLane, MSStageType::WALKING),
     myWalkingTime(walkingTime),
     myExitTimes(nullptr) {
     myDepartPos = SUMOVehicleParameter::interpretEdgePos(departPos, route.front()->getLength(), SUMO_ATTR_DEPARTPOS,
@@ -75,7 +77,26 @@ MSPerson::MSPersonStage_Walking::~MSPersonStage_Walking() {
 
 MSStage*
 MSPerson::MSPersonStage_Walking::clone() const {
-    return new MSPersonStage_Walking("dummyID", myRoute, myDestinationStop, myWalkingTime, mySpeed, myDepartPos, myArrivalPos, myDepartPosLat);
+    std::vector<const MSEdge*> route = myRoute;;
+    double departPos = myDepartPos;
+    double arrivalPos = myArrivalPos;
+    int departLane = myDepartLane;
+    if (myRouteID != "" && MSRoute::distDictionary(myRouteID) != nullptr) {
+        route = MSRoute::dictionary(myRouteID, MSRouteHandler::getParsingRNG())->getEdges();
+        if (departPos > route[0]->getLength()) {
+            WRITE_WARNINGF("Adjusting departPos for cloned walk with routeDistribution '%s'", myRouteID);
+            departPos = route[0]->getLength();
+        }
+        if (arrivalPos > route.back()->getLength()) {
+            WRITE_WARNINGF("Adjusting arrivalPos for cloned walk with routeDistribution '%s'", myRouteID);
+            arrivalPos = route.back()->getLength();
+        }
+        if (departLane >= route[0]->getNumLanes()) {
+            WRITE_WARNINGF("Adjusting departLane for cloned walk with routeDistribution '%s'", myRouteID);
+            departLane = route[0]->getNumLanes() - 1;
+        }
+    }
+    return new MSPersonStage_Walking("dummyID", route, myDestinationStop, myWalkingTime, mySpeed, departPos, arrivalPos, myDepartPosLat, departLane, myRouteID);
 }
 
 

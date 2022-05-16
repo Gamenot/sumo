@@ -250,9 +250,6 @@ protected:
 
         ///@brief Whether the lot is on the LHS of the lane relative to the lane direction
         bool sideIsLHS;
-
-        /// @brief Invalidated assignment operator.
-        LotSpaceDefinition& operator=(const LotSpaceDefinition&) = delete;
     };
 
     /** @brief Computes the last free position on this stop
@@ -266,7 +263,10 @@ protected:
     /// @brief Last free lot number (-1 no free lot)
     int myLastFreeLot;
 
-    /// @brief Stop area capacity
+    /// @brief Stop area capacity configured via roadsideCapacity
+    int myRoadSideCapacity;
+
+    /// @brief Stop area total capacity
     int myCapacity;
 
     /// @brief Whether vehicles stay on the road

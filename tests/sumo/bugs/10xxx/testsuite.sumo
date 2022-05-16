@@ -3,3 +3,12 @@ ticket10294
 
 # wide vehicle blocked on junction
 ticket10521
+
+# crash
+ticket10614
+
+# junction collision
+ticket10637
+
+# invalid blinker set
+ticket10665

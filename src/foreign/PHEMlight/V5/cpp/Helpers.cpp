@@ -1,4 +1,4 @@
-﻿/****************************************************************************/
+/****************************************************************************/
 // Eclipse SUMO, Simulation of Urban MObility; see https://eclipse.org/sumo
 // Copyright (C) 2016-2022 German Aerospace Center (DLR) and others.
 // PHEMlight module
@@ -20,6 +20,8 @@
 ///
 //
 /****************************************************************************/
+#include <config.h>
+
 #include "Helpers.h"
 #include "Constants.h"
 

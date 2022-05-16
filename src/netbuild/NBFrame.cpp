@@ -521,6 +521,15 @@ NBFrame::fillOptions(bool forNetgen) {
     oc.doRegister("tls.left-green.time", new Option_Integer(6));
     oc.addDescription("tls.left-green.time", "TLS Building", "Use INT as green phase duration for left turns (s). Setting this value to 0 disables additional left-turning phases");
 
+    oc.doRegister("tls.nema.vehExt", new Option_Integer(2));
+    oc.addDescription("tls.nema.vehExt", "TLS Building", "Set INT as fixed time for intermediate vehext phase after every switch");
+
+    oc.doRegister("tls.nema.yellow", new Option_Integer(3));
+    oc.addDescription("tls.nema.yellow", "TLS Building", "Set INT as fixed time for intermediate NEMA yelow phase after every switch");
+
+    oc.doRegister("tls.nema.red", new Option_Integer(2));
+    oc.addDescription("tls.nema.red", "TLS Building", "Set INT as fixed time for intermediate NEMA red phase after every switch");
+
     oc.doRegister("tls.crossing-min.time", new Option_Integer(4));
     oc.addDescription("tls.crossing-min.time", "TLS Building", "Use INT as minimum green duration for pedestrian crossings (s).");
 
@@ -709,7 +718,7 @@ NBFrame::checkOptions() {
     }
     if (oc.getFloat("junctions.scurve-stretch") > 0) {
         if (oc.getBool("no-internal-links")) {
-            WRITE_WARNING("option 'junctions.scurve-stretch' requires internal lanes to work. Option '--no-internal-links' was disabled.");
+            WRITE_WARNING("Option 'junctions.scurve-stretch' requires internal lanes to work. Option '--no-internal-links' will be disabled.");
         }
         // make sure the option is set so heuristics cannot ignore it
         oc.set("no-internal-links", "false");
@@ -718,7 +727,7 @@ NBFrame::checkOptions() {
         if (!oc.isDefault("junctions.small-radius")) {
             WRITE_WARNING("option 'default.junctions.radius' is smaller than option 'junctions.small-radius'");
         } else {
-            oc.set("junctions.small-radius", oc.getValueString("default.junctions.radius"));
+            oc.setDefault("junctions.small-radius", oc.getValueString("default.junctions.radius"));
         }
     }
     if (oc.getString("tls.layout") != "opposites"
@@ -737,16 +746,16 @@ NBFrame::checkOptions() {
         ok = false;
     }
     if (oc.isDefault("railway.topology.repair") && oc.getBool("railway.topology.repair.connect-straight")) {
-        oc.set("railway.topology.repair", "true");
+        oc.setDefault("railway.topology.repair", "true");
     }
     if (oc.isDefault("railway.topology.repair") && oc.getBool("railway.topology.repair.minimal")) {
-        oc.set("railway.topology.repair", "true");
+        oc.setDefault("railway.topology.repair", "true");
     }
     if (oc.isDefault("railway.topology.all-bidi") && !oc.isDefault("railway.topology.all-bidi.input-file")) {
-        oc.set("railway.topology.all-bidi", "true");
+        oc.setDefault("railway.topology.all-bidi", "true");
     }
     if (oc.isDefault("railway.topology.repair.stop-turn") && !oc.isDefault("railway.topology.repair")) {
-        oc.set("railway.topology.repair.stop-turn", "true");
+        oc.setDefault("railway.topology.repair.stop-turn", "true");
     }
     if (!SUMOXMLDefinitions::LaneSpreadFunctions.hasString(oc.getString("default.spreadtype"))) {
         WRITE_ERROR("Unknown value for default.spreadtype '" + oc.getString("default.spreadtype") + "'.");

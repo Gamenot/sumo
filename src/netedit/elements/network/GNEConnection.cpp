@@ -48,12 +48,12 @@ static const int NUM_POINTS = 5;
 GNEConnection::GNEConnection(GNELane* from, GNELane* to) :
     GNENetworkElement(from->getNet(), "from" + from->getID() + "to" + to->getID(),
                       GLO_CONNECTION, SUMO_TAG_CONNECTION,
-    {}, {}, {}, {}, {}, {}),
-    myFromLane(from),
-    myToLane(to),
-    myLinkState(LINKSTATE_TL_OFF_NOSIGNAL),
-    mySpecialColor(nullptr),
-    myShapeDeprecated(true) {
+{}, {}, {}, {}, {}, {}),
+myFromLane(from),
+myToLane(to),
+myLinkState(LINKSTATE_TL_OFF_NOSIGNAL),
+mySpecialColor(nullptr),
+myShapeDeprecated(true) {
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -76,7 +76,7 @@ GNEConnection::getConnectionShape() const {
 void
 GNEConnection::updateGeometry() {
     // Get shape of from and to lanes
-    NBEdge::Connection& nbCon = getNBEdgeConnection();
+    const NBEdge::Connection& nbCon = getNBEdgeConnection();
     if (myShapeDeprecated) {
         // obtain lane shape from
         PositionVector laneShapeFrom;
@@ -158,7 +158,7 @@ GNEConnection::getMoveOperation() {
         // calculate move shape operation
         return calculateMoveShapeOperation(connection.customShape.size() > 0 ? connection.customShape : myConnectionGeometry.getShape(),
                                            myNet->getViewNet()->getPositionInformation(),
-                                           myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.connectionGeometryPointRadius, true);
+                                           myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.connectionGeometryPointRadius, true);
     } else {
         return nullptr;
     }
@@ -178,7 +178,7 @@ GNEConnection::removeGeometryPoint(const Position clickedPosition, GNEUndoList* 
             // obtain index
             int index = shape.indexOfClosest(clickedPosition);
             // get snap radius
-            const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.connectionGeometryPointRadius;
+            const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.connectionGeometryPointRadius;
             // check if we have to create a new index
             if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
                 // remove geometry point
@@ -264,7 +264,7 @@ GNEConnection::markConnectionGeometryDeprecated() {
 
 void
 GNEConnection::updateLinkState() {
-    NBEdge::Connection& nbCon = getNBEdgeConnection();
+    const NBEdge::Connection& nbCon = getNBEdgeConnection();
     myLinkState = getEdgeFrom()->getNBEdge()->getToNode()->getLinkState(getEdgeFrom()->getNBEdge(),
                   nbCon.toEdge,
                   nbCon.fromLane,
@@ -274,7 +274,7 @@ GNEConnection::updateLinkState() {
 }
 
 
-void 
+void
 GNEConnection::smootShape() {
     auto shape = getConnectionShape();
     shape = shape.bezier(5);
@@ -428,7 +428,7 @@ GNEConnection::drawGL(const GUIVisualizationSettings& s) const {
             GLHelper::popMatrix();
             // check if edge value has to be shown
             if (s.edgeValue.show(this)) {
-                NBEdge::Connection& nbCon = getNBEdgeConnection();
+                const NBEdge::Connection& nbCon = getNBEdgeConnection();
                 std::string value = nbCon.getParameter(s.edgeParam, "");
                 if (value != "") {
                     int shapeIndex = (int)myConnectionGeometry.getShape().size() / 2;
@@ -472,7 +472,7 @@ GNEConnection::getAttribute(SumoXMLAttr key) const {
         // @note: may be called for connections without a valid nbCon reference
         return getID();
     }
-    NBEdge::Connection& nbCon = getNBEdgeConnection();
+    const NBEdge::Connection& nbCon = getNBEdgeConnection();
     switch (key) {
         case SUMO_ATTR_FROM:
             return getEdgeFrom()->getID();

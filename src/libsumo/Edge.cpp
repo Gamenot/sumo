@@ -17,6 +17,7 @@
 ///
 // C++ TraCI client API implementation
 /****************************************************************************/
+#include <config.h>
 
 #include <iterator>
 #include <microsim/MSEdge.h>
@@ -25,6 +26,7 @@
 #include <microsim/transportables/MSTransportable.h>
 #include <microsim/MSVehicle.h>
 #include <microsim/MSInsertionControl.h>
+#include <libsumo/Helper.h>
 #include <libsumo/TraCIDefs.h>
 #include <libsumo/TraCIConstants.h>
 #include <utils/emissions/HelpersHarmonoise.h>

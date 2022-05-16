@@ -435,7 +435,9 @@ NIImporter_OpenDrive::loadNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
             }
         }
 #ifdef DEBUG_SHAPE
-        if (DEBUG_COND3(e->id)) std::cout << " geomWithOffset=" << geomWithOffset << "\n";
+        if (DEBUG_COND3(e->id)) {
+            std::cout << " geomWithOffset=" << geomWithOffset << "\n";
+        }
 #endif
         const double length2D = geomWithOffset.length2D();
         double cF = length2D == 0 ? 1 : e->length / length2D;
@@ -496,7 +498,9 @@ NIImporter_OpenDrive::loadNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
                 bool useOffsets = false;
                 PositionVector rightGeom = geom;
 #ifdef DEBUG_SHAPE
-                if (DEBUG_COND3(e->id)) gDebugFlag1 = true;
+                if (DEBUG_COND3(e->id)) {
+                    gDebugFlag1 = true;
+                }
 #endif
                 rightGeom.move2side((*j).discardedInnerWidthRight);
 #ifdef DEBUG_SHAPE
@@ -560,7 +564,9 @@ NIImporter_OpenDrive::loadNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
                 leftGeom.move2side(-(*j).discardedInnerWidthLeft);
                 PositionVector laneGeom = leftGeom;
 #ifdef DEBUG_SHAPE
-                if (DEBUG_COND3(e->id)) std::cout << " " << id << "_geom=" << geom << " " << id << "_leftGeom=" << leftGeom << "\n";
+                if (DEBUG_COND3(e->id)) {
+                    std::cout << " " << id << "_geom=" << geom << " " << id << "_leftGeom=" << leftGeom << "\n";
+                }
 #endif
                 currLeft = new NBEdge(id, sTo, sFrom, (*j).leftType, defaultSpeed, (*j).leftLaneNumber, priorityL,
                                       NBEdge::UNSPECIFIED_WIDTH, NBEdge::UNSPECIFIED_OFFSET, leftGeom.reverse(), LaneSpreadFunction::RIGHT, e->streetName, "", true);
@@ -1460,7 +1466,9 @@ NIImporter_OpenDrive::computeShapes(std::map<std::string, OpenDriveEdge*>& edges
             e.geom.push_back(last);
         }
 #ifdef DEBUG_SHAPE
-        if (DEBUG_COND3(e.id)) std::cout << " initialGeom=" << e.geom << "\n";
+        if (DEBUG_COND3(e.id)) {
+            std::cout << " initialGeom=" << e.geom << "\n";
+        }
 #endif
         if (oc.exists("geometry.min-dist") && !oc.isDefault("geometry.min-dist")) {
             // simplify geometry for both directions consistently but ensure
@@ -1470,7 +1478,9 @@ NIImporter_OpenDrive::computeShapes(std::map<std::string, OpenDriveEdge*>& edges
             }
         }
 #ifdef DEBUG_SHAPE
-        if (DEBUG_COND3(e.id)) std::cout << " reducedGeom=" << e.geom << "\n";
+        if (DEBUG_COND3(e.id)) {
+            std::cout << " reducedGeom=" << e.geom << "\n";
+        }
 #endif
         if (!NBNetBuilder::transformCoordinates(e.geom)) {
             WRITE_ERROR("Unable to project coordinates for edge '" + e.id + "'.");
@@ -2287,8 +2297,11 @@ NIImporter_OpenDrive::myStartElement(int element,
         case OPENDRIVE_TAG_VALIDITY: {
             int fromLane = attrs.get<int>(OPENDRIVE_ATTR_FROMLANE, myCurrentEdge.id.c_str(), ok);
             int toLane = attrs.get<int>(OPENDRIVE_ATTR_TOLANE, myCurrentEdge.id.c_str(), ok);
-            myCurrentEdge.signals.back().minLane = fromLane;
-            myCurrentEdge.signals.back().maxLane = toLane;
+            if (myElementStack.size() >= 1 && (myElementStack.back() == OPENDRIVE_TAG_SIGNAL
+                        || myElementStack.back() == OPENDRIVE_TAG_SIGNALREFERENCE)) {
+                myCurrentEdge.signals.back().minLane = fromLane;
+                myCurrentEdge.signals.back().maxLane = toLane;
+            }
         }
         break;
         case OPENDRIVE_TAG_JUNCTION:

@@ -85,12 +85,12 @@ GNELane::LaneDrawingConstants::LaneDrawingConstants() :
 
 GNELane::GNELane(GNEEdge* edge, const int index) :
     GNENetworkElement(edge->getNet(), edge->getNBEdge()->getLaneID(index), GLO_LANE, SUMO_TAG_LANE,
-        {}, {}, {}, {}, {}, {}),
-    myParentEdge(edge),
-    myIndex(index),
-    mySpecialColor(nullptr),
-    mySpecialColorValue(-1),
-    myLane2laneConnections(this) {
+{}, {}, {}, {}, {}, {}),
+myParentEdge(edge),
+myIndex(index),
+mySpecialColor(nullptr),
+mySpecialColorValue(-1),
+myLane2laneConnections(this) {
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -98,12 +98,12 @@ GNELane::GNELane(GNEEdge* edge, const int index) :
 
 GNELane::GNELane() :
     GNENetworkElement(nullptr, "dummyConstructorGNELane", GLO_LANE, SUMO_TAG_LANE,
-        {}, {}, {}, {}, {}, {}),
-    myParentEdge(nullptr),
-    myIndex(-1),
-    mySpecialColor(nullptr),
-    mySpecialColorValue(-1),
-    myLane2laneConnections(this) {
+{}, {}, {}, {}, {}, {}),
+myParentEdge(nullptr),
+myIndex(-1),
+mySpecialColor(nullptr),
+mySpecialColorValue(-1),
+myLane2laneConnections(this) {
 }
 
 
@@ -239,7 +239,7 @@ GNELane::getMoveOperation() {
     if (isShapeEdited()) {
         // calculate move shape operation
         return calculateMoveShapeOperation(getLaneShape(), myNet->getViewNet()->getPositionInformation(),
-                                           myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.laneGeometryPointRadius, true);
+                                           myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.laneGeometryPointRadius, true);
     } else {
         return nullptr;
     }
@@ -257,7 +257,7 @@ GNELane::removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoLi
             // obtain index
             int index = shape.indexOfClosest(clickedPosition);
             // get snap radius
-            const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.laneGeometryPointRadius;
+            const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.laneGeometryPointRadius;
             // check if we have to create a new index
             if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
                 // remove geometry point
@@ -312,7 +312,7 @@ GNELane::drawLinkNo(const GUIVisualizationSettings& s) const {
 void
 GNELane::drawTLSLinkNo(const GUIVisualizationSettings& s) const {
     // first check that drawLinkTLIndex must be drawn
-    if (s.drawLinkTLIndex.show(myParentEdge->getToJunction())) {
+    if (s.drawLinkTLIndex.show(myParentEdge->getToJunction()) && (myParentEdge->getToJunction()->getNBNode()->getControllingTLS().size() > 0)) {
         // get connections
         const std::vector<NBEdge::Connection>& cons = myParentEdge->getNBEdge()->getConnectionsFromLane(myIndex);
         // get numer of links

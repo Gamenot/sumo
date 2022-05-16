@@ -221,7 +221,7 @@ public:
     const Position getBackDownShapePosition() const;
 
     /// @brief remake connections
-    void remakeGNEConnections();
+    void remakeGNEConnections(bool junctionsReady = false);
 
     /// @brief copy edge attributes from edgetemplate
     void copyTemplate(const GNEEdgeTemplate* edgeTemplate, GNEUndoList* undoList);
@@ -302,6 +302,12 @@ public:
 
     /// @brief check if edge makes a convex angle [0 - 180) degrees
     bool isConvexAngle() const;
+
+    /// @brief check if this edge has predecessors (note: only for vehicles, this function ignore walking areas!)
+    bool hasPredecessors() const;
+
+    /// @brief check if this edge has successors (note: only for vehicles, this function ignore walking areas!)
+    bool hasSuccessors() const;
 
 protected:
     /// @brief the underlying NBEdge

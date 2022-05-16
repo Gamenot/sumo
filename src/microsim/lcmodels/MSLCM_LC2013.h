@@ -96,6 +96,8 @@ public:
 
     void changed() override;
 
+    void resetState() override;
+
     double getSafetyFactor() const override;
 
     double getOppositeSafetyFactor() const override;
@@ -172,7 +174,7 @@ protected:
     void adaptSpeedToPedestrians(const MSLane* lane, double& v);
 
     /// @brief reserve space at the end of the lane to avoid dead locks
-    double saveBlockerLength(double length, double foeLeftSpace) override;
+    bool saveBlockerLength(double length, double foeLeftSpace) override;
 
     inline bool amBlockingLeader() {
         return (myOwnState & LCA_AMBLOCKINGLEADER) != 0;

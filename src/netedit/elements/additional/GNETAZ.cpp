@@ -47,14 +47,14 @@ const double GNETAZ::myHintSizeSquared = 0.64;
 
 GNETAZ::GNETAZ(GNENet* net) :
     GNEAdditional("", net, GLO_TAZ, SUMO_TAG_TAZ, "",
-        {}, {}, {}, {}, {}, {}),
-    TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, ""),
-    myMaxWeightSource(0),
-    myMinWeightSource(0),
-    myAverageWeightSource(0),
-    myMaxWeightSink(0),
-    myMinWeightSink(0),
-    myAverageWeightSink(0) {
+{}, {}, {}, {}, {}, {}),
+TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, ""),
+myMaxWeightSource(0),
+myMinWeightSource(0),
+myAverageWeightSource(0),
+myMaxWeightSink(0),
+myMinWeightSink(0),
+myAverageWeightSink(0) {
     // reset default values
     resetDefaultValues();
 }
@@ -63,15 +63,15 @@ GNETAZ::GNETAZ(GNENet* net) :
 GNETAZ::GNETAZ(const std::string& id, GNENet* net, const PositionVector& shape, const Position& center, const bool fill,
                const RGBColor& color, const std::string& name, const Parameterised::Map& parameters) :
     GNEAdditional(id, net, GLO_TAZ, SUMO_TAG_TAZ, "",
-        {}, {}, {}, {}, {}, {}),
-    TesselatedPolygon(id, "", color, shape, false, fill, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, name, parameters),
-    myTAZCenter(center),
-    myMaxWeightSource(0),
-    myMinWeightSource(0),
-    myAverageWeightSource(0),
-    myMaxWeightSink(0),
-    myMinWeightSink(0),
-    myAverageWeightSink(0) {
+{}, {}, {}, {}, {}, {}),
+TesselatedPolygon(id, "", color, shape, false, fill, 1, Shape::DEFAULT_LAYER, Shape::DEFAULT_ANGLE, Shape::DEFAULT_IMG_FILE, Shape::DEFAULT_RELATIVEPATH, name, parameters),
+myTAZCenter(center),
+myMaxWeightSource(0),
+myMinWeightSource(0),
+myAverageWeightSource(0),
+myMaxWeightSink(0),
+myMinWeightSink(0),
+myAverageWeightSink(0) {
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
     // update geometry
@@ -85,7 +85,7 @@ GNETAZ::~GNETAZ() {}
 GNEMoveOperation*
 GNETAZ::getMoveOperation() {
     // get snap radius
-    const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius;
+    const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius;
     // check if we're moving center or shape
     if (myTAZCenter.distanceSquaredTo2D(myNet->getViewNet()->getPositionInformation()) < (snap_radius * snap_radius)) {
         // move entire shape
@@ -108,7 +108,7 @@ GNETAZ::getVertexIndex(Position pos, bool snapToGrid) {
     }
     // first check if vertex already exists
     for (const auto& shapePosition : myShape) {
-        if (shapePosition.distanceTo2D(pos) < myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius) {
+        if (shapePosition.distanceTo2D(pos) < myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius) {
             return myShape.indexOfClosest(shapePosition);
         }
     }
@@ -127,7 +127,7 @@ GNETAZ::removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoLis
         // get last index
         const int lastIndex = ((int)shape.size() - 1);
         // get snap radius
-        const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius;
+        const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius;
         // check if we have to create a new index
         if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
             // check if we're deleting the first point
@@ -207,7 +207,7 @@ GNETAZ::getExaggeration(const GUIVisualizationSettings& s) const {
 }
 
 
-void 
+void
 GNETAZ::updateCenteringBoundary(const bool updateGrid) {
     // Remove object from net
     if (updateGrid) {
@@ -233,7 +233,7 @@ GNETAZ::updateCenteringBoundary(const bool updateGrid) {
 }
 
 
-void 
+void
 GNETAZ::splitEdgeGeometry(const double /*splitPosition*/, const GNENetworkElement* /*originalElement*/, const GNENetworkElement* /*newElement*/, GNEUndoList* /*undoList*/) {
     // Nothing to split
 }

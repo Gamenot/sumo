@@ -161,8 +161,13 @@ MSLCM_SL2015::~MSLCM_SL2015() {
 
 void
 MSLCM_SL2015::initDerivedParameters() {
-    myChangeProbThresholdRight = ((0.2 / mySpeedGainRight) / MAX2(NUMERICAL_EPS, mySpeedGainParam));
-    myChangeProbThresholdLeft = (0.2 / MAX2(NUMERICAL_EPS, mySpeedGainParam));
+    if (mySpeedGainParam <= 0) {
+        myChangeProbThresholdRight = std::numeric_limits<double>::max();
+        myChangeProbThresholdLeft = std::numeric_limits<double>::max();
+    } else {
+        myChangeProbThresholdRight = (0.2 / mySpeedGainRight) / mySpeedGainParam;
+        myChangeProbThresholdLeft = 0.2 / mySpeedGainParam;
+    }
     mySpeedLossProbThreshold = (-0.1 + (1 - mySublaneParam));
 }
 
@@ -564,7 +569,7 @@ MSLCM_SL2015::informLeader(int blocked,
                 || myLeftSpace - myLeadingBlockerLength - myVehicle.getCarFollowModel().brakeGap(myVehicle.getSpeed()) < overtakeDist
                 // not enough time to overtake?
                 || dv * remainingSeconds < overtakeDist)
-              && (!neighLead.first->isStopped() || (isOpposite() && neighLead.second >= 0))) {
+                && (!neighLead.first->isStopped() || (isOpposite() && neighLead.second >= 0))) {
             // cannot overtake
             msg(neighLead, -1, dir | LCA_AMBLOCKINGLEADER);
             // slow down smoothly to follow leader
@@ -1019,6 +1024,20 @@ MSLCM_SL2015::changed() {
 }
 
 
+void
+MSLCM_SL2015::resetState() {
+    myOwnState = 0;
+    mySpeedGainProbabilityRight = 0;
+    mySpeedGainProbabilityLeft = 0;
+    myKeepRightProbability = 0;
+    myLeadingBlockerLength = 0;
+    myLeftSpace = 0;
+    myLookAheadSpeed = LOOK_AHEAD_MIN_SPEED;
+    myLCAccelerationAdvices.clear();
+    myDontBrake = false;
+}
+
+
 int
 MSLCM_SL2015::_wantsChangeSublane(
     int laneOffset,
@@ -1279,7 +1298,9 @@ MSLCM_SL2015::_wantsChangeSublane(
         MSVehicle* neighLeadLongest = const_cast<MSVehicle*>(getLongest(neighLeaders).first);
         const bool canContinue = curr.bestContinuations.size() > 1;
 #ifdef DEBUG_WANTSCHANGE
-        if (DEBUG_COND) std::cout << SIMTIME << " veh=" << myVehicle.getID() << " neighLeaders=" << neighLeaders.toString() << " longest=" << Named::getIDSecure(neighLeadLongest) << " firstBlocked=" << Named::getIDSecure(*firstBlocked) << "\n";
+        if (DEBUG_COND) {
+            std::cout << SIMTIME << " veh=" << myVehicle.getID() << " neighLeaders=" << neighLeaders.toString() << " longest=" << Named::getIDSecure(neighLeadLongest) << " firstBlocked=" << Named::getIDSecure(*firstBlocked) << "\n";
+        }
 #endif
         bool canReserve = MSLCHelper::saveBlockerLength(myVehicle, neighLeadLongest, lcaCounter, myLeftSpace, canContinue, myLeadingBlockerLength);
         if (*firstBlocked != neighLeadLongest && tieBrakeLeader(*firstBlocked)) {
@@ -1377,6 +1398,22 @@ MSLCM_SL2015::_wantsChangeSublane(
     const double inconvenience = (latLaneDist < 0
                                   ? -mySpeedGainProbabilityRight / myChangeProbThresholdRight
                                   : -mySpeedGainProbabilityLeft / myChangeProbThresholdLeft);
+#ifdef DEBUG_COOPERATE
+    if (gDebugFlag2) {
+        std::cout << STEPS2TIME(currentTime)
+            << " veh=" << myVehicle.getID()
+            << " amBlocking=" << amBlockingFollowerPlusNB()
+            << " state=" << toString((LaneChangeAction)myOwnState)
+            << " myLca=" << toString((LaneChangeAction)myLca)
+            << " prevState=" << toString((LaneChangeAction)myPreviousState)
+            << " inconvenience=" << inconvenience
+            << " origLatDist=" << getManeuverDist()
+            << " wantsChangeToHelp=" << (right ? "right" : "left")
+            << " state=" << myOwnState
+            << "\n";
+    }
+#endif
+
     if (laneOffset != 0
             && ((amBlockingFollowerPlusNB()
                  // VARIANT_6 : counterNoHelp
@@ -1393,15 +1430,7 @@ MSLCM_SL2015::_wantsChangeSublane(
         // VARIANT_2 (nbWhenChangingToHelp)
 #ifdef DEBUG_COOPERATE
         if (gDebugFlag2) {
-            std::cout << STEPS2TIME(currentTime)
-                      << " veh=" << myVehicle.getID()
-                      << " amBlocking=" << amBlockingFollowerPlusNB()
-                      << " prevState=" << toString((LaneChangeAction)myPreviousState)
-                      << " origLatDist=" << getManeuverDist()
-                      << " wantsChangeToHelp=" << (right ? "right" : "left")
-                      << " state=" << myOwnState
-                      //<< (((myOwnState & myLca) == 0) ? " (counter)" : "")
-                      << "\n";
+            std::cout << "   wants cooperative change\n";
         }
 #endif
 
@@ -2163,9 +2192,9 @@ bool
 MSLCM_SL2015::tieBrakeLeader(const MSVehicle* veh) const {
     // tie braker if the leader is at the same lane position
     return veh != nullptr && (veh->getPositionOnLane() != myVehicle.getPositionOnLane()
-        || veh->getSpeed() < myVehicle.getSpeed()
-        || &veh->getLane()->getEdge() != &myVehicle.getLane()->getEdge()
-        || veh->getLane()->getIndex() > myVehicle.getLane()->getIndex());
+                              || veh->getSpeed() < myVehicle.getSpeed()
+                              || &veh->getLane()->getEdge() != &myVehicle.getLane()->getEdge()
+                              || veh->getLane()->getIndex() > myVehicle.getLane()->getIndex());
 }
 
 
@@ -2909,10 +2938,10 @@ MSLCM_SL2015::keepLatGap(int state,
     double surplusGapRight = oldCenter - halfWidth;
     double surplusGapLeft = getLeftBorder(laneOffset != 0) - oldCenter - halfWidth;
     const bool stayInLane = (laneOffset == 0
-        || ((state & LCA_STRATEGIC) != 0
-            && (state & LCA_STAY) != 0
-            // permit wide vehicles to stay on the road
-            && (surplusGapLeft >= 0 && surplusGapRight >= 0)));
+                             || ((state & LCA_STRATEGIC) != 0
+                                 && (state & LCA_STAY) != 0
+                                 // permit wide vehicles to stay on the road
+                                 && (surplusGapLeft >= 0 && surplusGapRight >= 0)));
 
     if (isOpposite()) {
         std::swap(surplusGapLeft, surplusGapRight);
@@ -3545,7 +3574,7 @@ MSLCM_SL2015::getParameter(const std::string& key) const {
         return toString(myLookAheadSpeed);
     } else if (key == "sigmaState") {
         return toString(mySigmaState);
-        // motivaiton relative to threshold
+        // motivation relative to threshold
     } else if (key == "speedGainRP") {
         return toString(mySpeedGainProbabilityRight / myChangeProbThresholdRight);
     } else if (key == "speedGainLP") {
@@ -3754,7 +3783,7 @@ MSLCM_SL2015::wantsKeepRight(double keepRightProb) const {
 }
 
 
-double
+bool
 MSLCM_SL2015::saveBlockerLength(double length, double foeLeftSpace) {
     const bool canReserve = MSLCHelper::canSaveBlockerLength(myVehicle, length, myLeftSpace);
     if (!isOpposite() && (canReserve || myLeftSpace > foeLeftSpace)) {

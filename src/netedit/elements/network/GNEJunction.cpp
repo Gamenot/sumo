@@ -49,7 +49,7 @@
 
 GNEJunction::GNEJunction(GNENet* net, NBNode* nbn, bool loaded) :
     GNENetworkElement(net, nbn->getID(), GLO_JUNCTION, SUMO_TAG_JUNCTION,
-        {}, {}, {}, {}, {}, {}),
+            {}, {}, {}, {}, {}, {}),
     myNBNode(nbn),
     myMaxDrawingSize(1),
     myAmCreateEdgeSource(false),
@@ -57,7 +57,10 @@ GNEJunction::GNEJunction(GNENet* net, NBNode* nbn, bool loaded) :
     myAmResponsible(false),
     myHasValidLogic(loaded),
     myAmTLSSelected(false),
-    myColorForMissingConnections(false) {
+    myColorForMissingConnections(false),
+    myTesselation(nbn->getID(), "", RGBColor::MAGENTA, nbn->getShape(), false, true, 0),
+    myExaggeration(1)
+{
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -94,6 +97,8 @@ GNEJunction::getJunctionShape() const {
 void
 GNEJunction::updateGeometry() {
     updateGeometryAfterNetbuild(true);
+    // trigger rebuilding tesselation
+    myExaggeration = 2;
 }
 
 
@@ -118,7 +123,7 @@ GNEJunction::getMoveOperation() {
     if (isShapeEdited()) {
         // calculate move shape operation
         return calculateMoveShapeOperation(myNBNode->getShape(), myNet->getViewNet()->getPositionInformation(),
-                                           myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.junctionGeometryPointRadius, true);
+                                           myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.junctionGeometryPointRadius, true);
     } else {
         // return move junction position
         return new GNEMoveOperation(this, myNBNode->getPosition());
@@ -137,7 +142,7 @@ GNEJunction::removeGeometryPoint(const Position clickedPosition, GNEUndoList* un
             // obtain index
             int index = shape.indexOfClosest(clickedPosition);
             // get snap radius
-            const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.junctionGeometryPointRadius;
+            const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.junctionGeometryPointRadius;
             // check if we have to create a new index
             if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
                 // remove geometry point
@@ -399,18 +404,18 @@ GNEJunction::drawGL(const GUIVisualizationSettings& s) const {
                 if (junctionShapeColor.alpha() != 0) {
                     // set color
                     GLHelper::setColor(junctionShapeColor);
-                    // obtain junction Shape
-                    PositionVector junctionClosedShape = myNBNode->getShape();
-                    // close junction shape
-                    junctionClosedShape.closePolygon();
                     // adjust shape to exaggeration
-                    if (junctionExaggeration > 1) {
-                        junctionClosedShape.scaleRelative(junctionExaggeration);
+                    if ((junctionExaggeration > 1 || myExaggeration > 1) && junctionExaggeration != myExaggeration) {
+                        myExaggeration = junctionExaggeration;
+                        myTesselation.setShape(myNBNode->getShape());
+                        myTesselation.getShapeRef().closePolygon();
+                        myTesselation.getShapeRef().scaleRelative(junctionExaggeration);
+                        myTesselation.myTesselation.clear();
                     }
                     // first check if inner junction polygon can be drawn
                     if (s.drawForPositionSelection) {
                         // only draw a point if mouse is around shape
-                        if (junctionClosedShape.around(mousePosition)) {
+                        if (myTesselation.getShape().around(mousePosition)) {
                             // push matrix
                             GLHelper::pushMatrix();
                             // move to mouse position
@@ -420,12 +425,12 @@ GNEJunction::drawGL(const GUIVisualizationSettings& s) const {
                             // pop matrix
                             GLHelper::popMatrix();
                         }
-                    } else if ((s.scale * junctionExaggeration * myMaxDrawingSize) < 40.) {
-                        // draw shape
-                        GLHelper::drawFilledPoly(junctionClosedShape, true);
-                    } else {
+                    } else if ((s.scale * junctionExaggeration * myMaxDrawingSize) >= 40) {
                         // draw shape with high detail
-                        GLHelper::drawFilledPolyTesselated(junctionClosedShape, true);
+                        myTesselation.drawTesselation(myTesselation.getShape());
+                    } else {
+                        // draw shape
+                        GLHelper::drawFilledPoly(myTesselation.getShape(), true);
                     }
                     // draw shape points only in Network supemode
                     if (myShapeEdited && s.drawMovingGeometryPoint(junctionExaggeration, s.neteditSizeSettings.junctionGeometryPointRadius) && myNet->getViewNet()->getEditModes().isCurrentSupermodeNetwork()) {
@@ -955,6 +960,43 @@ GNEJunction::markConnectionsDeprecated(bool includingNeighbours) {
 }
 
 
+void 
+GNEJunction::setJunctionType(const std::string &value, GNEUndoList* undoList) {
+    undoList->begin(GUIIcon::JUNCTION, "change " + getTagStr() + " type");
+    if (NBNode::isTrafficLight(SUMOXMLDefinitions::NodeTypes.get(value))) {
+        if (getNBNode()->isTLControlled() &&
+            // if switching changing from or to traffic_light_right_on_red we need to remove the old plan
+            (getNBNode()->getType() == SumoXMLNodeType::TRAFFIC_LIGHT_RIGHT_ON_RED
+                || SUMOXMLDefinitions::NodeTypes.get(value) == SumoXMLNodeType::TRAFFIC_LIGHT_RIGHT_ON_RED)
+            ) {
+            // make a copy because we will modify the original
+            const std::set<NBTrafficLightDefinition*> copyOfTls = myNBNode->getControllingTLS();
+            for (const auto& TLS : copyOfTls) {
+                undoList->add(new GNEChange_TLS(this, TLS, false), true);
+            }
+        }
+        if (!getNBNode()->isTLControlled()) {
+            // create new traffic light
+            undoList->add(new GNEChange_TLS(this, nullptr, true), true);
+        }
+    } else if (getNBNode()->isTLControlled()) {
+        // delete old traffic light
+        // make a copy because we will modify the original
+        const std::set<NBTrafficLightDefinition*> copyOfTls = myNBNode->getControllingTLS();
+        for (const auto& TLS : copyOfTls) {
+            undoList->add(new GNEChange_TLS(this, TLS, false, false), true);
+        }
+    }
+    // must be the final step, otherwise we do not know which traffic lights to remove via GNEChange_TLS
+    undoList->add(new GNEChange_Attribute(this, SUMO_ATTR_TYPE, value), true);
+    for (const auto& crossing : myGNECrossings) {
+        undoList->add(new GNEChange_Attribute(crossing, SUMO_ATTR_TLLINKINDEX, "-1"), true);
+        undoList->add(new GNEChange_Attribute(crossing, SUMO_ATTR_TLLINKINDEX2, "-1"), true);
+    }
+    undoList->end();
+}
+
+
 std::string
 GNEJunction::getAttribute(SumoXMLAttr key) const {
     switch (key) {
@@ -1000,11 +1042,11 @@ GNEJunction::getAttribute(SumoXMLAttr key) const {
             for (const auto& i : myGNEIncomingEdges) {
                 for (const auto& j : i->getGNEConnections()) {
                     if (j->getNBEdgeConnection().keepClear) {
-                        return toString(true);
+                        return True;
                     }
                 }
             }
-            return toString(false);
+            return False;
         case SUMO_ATTR_RIGHT_OF_WAY:
             return SUMOXMLDefinitions::RightOfWayValues.getString(myNBNode->getRightOfWay());
         case SUMO_ATTR_FRINGE:
@@ -1050,38 +1092,8 @@ GNEJunction::setAttribute(SumoXMLAttr key, const std::string& value, GNEUndoList
             undoList->end();
             break;
         case SUMO_ATTR_TYPE: {
-            undoList->begin(GUIIcon::JUNCTION, "change " + getTagStr() + " type");
-            if (NBNode::isTrafficLight(SUMOXMLDefinitions::NodeTypes.get(value))) {
-                if (getNBNode()->isTLControlled() &&
-                        // if switching changing from or to traffic_light_right_on_red we need to remove the old plan
-                        (getNBNode()->getType() == SumoXMLNodeType::TRAFFIC_LIGHT_RIGHT_ON_RED
-                         || SUMOXMLDefinitions::NodeTypes.get(value) == SumoXMLNodeType::TRAFFIC_LIGHT_RIGHT_ON_RED)
-                   ) {
-                    // make a copy because we will modify the original
-                    const std::set<NBTrafficLightDefinition*> copyOfTls = myNBNode->getControllingTLS();
-                    for (const auto& TLS : copyOfTls) {
-                        undoList->add(new GNEChange_TLS(this, TLS, false), true);
-                    }
-                }
-                if (!getNBNode()->isTLControlled()) {
-                    // create new traffic light
-                    undoList->add(new GNEChange_TLS(this, nullptr, true), true);
-                }
-            } else if (getNBNode()->isTLControlled()) {
-                // delete old traffic light
-                // make a copy because we will modify the original
-                const std::set<NBTrafficLightDefinition*> copyOfTls = myNBNode->getControllingTLS();
-                for (const auto& TLS : copyOfTls) {
-                    undoList->add(new GNEChange_TLS(this, TLS, false, false), true);
-                }
-            }
-            // must be the final step, otherwise we do not know which traffic lights to remove via GNEChange_TLS
-            undoList->add(new GNEChange_Attribute(this, key, value), true);
-            for (const auto& crossing : myGNECrossings) {
-                undoList->add(new GNEChange_Attribute(crossing, SUMO_ATTR_TLLINKINDEX, "-1"), true);
-                undoList->add(new GNEChange_Attribute(crossing, SUMO_ATTR_TLLINKINDEX2, "-1"), true);
-            }
-            undoList->end();
+            // set junction type
+            setJunctionType(value, undoList);
             break;
         }
         case SUMO_ATTR_TLTYPE: {

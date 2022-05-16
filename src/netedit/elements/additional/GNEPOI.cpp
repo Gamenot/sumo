@@ -18,6 +18,8 @@
 // A class for visualizing and editing POIS in netedit (adapted from
 // GUIPointOfInterest and NLHandler)
 /****************************************************************************/
+#include <config.h>
+
 #include <string>
 #include <netedit/GNENet.h>
 #include <netedit/GNEUndoList.h>
@@ -41,8 +43,8 @@
 
 GNEPOI::GNEPOI(SumoXMLTag tag, GNENet* net) :
     PointOfInterest("", "", RGBColor::BLACK, Position(0, 0), false, "", 0, false, 0, 0, 0, "", false, 0, 0, "", Parameterised::Map()),
-    GNEAdditional("", net, GLO_POI, tag, "", 
-        {}, {}, {}, {}, {}, {}) {
+    GNEAdditional("", net, GLO_POI, tag, "",
+{}, {}, {}, {}, {}, {}) {
     // reset default values
     resetDefaultValues();
 }
@@ -53,8 +55,8 @@ GNEPOI::GNEPOI(GNENet* net, const std::string& id, const std::string& type, cons
                const bool relativePath, const double width, const double height, const std::string& name,
                const Parameterised::Map& parameters) :
     PointOfInterest(id, type, color, Position(xLon, yLat), geo, "", 0, false, 0, layer, angle, imgFile, relativePath, width, height, name, parameters),
-    GNEAdditional(id, net, GLO_POI, geo ? GNE_TAG_POIGEO : SUMO_TAG_POI, "", 
-        {}, {}, {}, {}, {}, {}) {
+    GNEAdditional(id, net, GLO_POI, geo ? GNE_TAG_POIGEO : SUMO_TAG_POI, "",
+{}, {}, {}, {}, {}, {}) {
     // update position depending of GEO
     if (geo) {
         Position cartesian(x(), y());
@@ -70,8 +72,8 @@ GNEPOI::GNEPOI(GNENet* net, const std::string& id, const std::string& type, cons
                const bool friendlyPos, const double posLat, const double layer, const double angle, const std::string& imgFile, const bool relativePath, const double width,
                const double height, const std::string& name, const Parameterised::Map& parameters) :
     PointOfInterest(id, type, color, Position(), false, lane->getID(), posOverLane, friendlyPos, posLat, layer, angle, imgFile, relativePath, width, height, name, parameters),
-    GNEAdditional(id, net, GLO_POI, GNE_TAG_POILANE, "", 
-        {}, {}, {lane}, {}, {}, {}) {
+    GNEAdditional(id, net, GLO_POI, GNE_TAG_POILANE, "",
+{}, {}, {lane}, {}, {}, {}) {
     // update geometry (needed for POILanes)
     updateGeometry();
     // update centering boundary without updating grid
@@ -88,7 +90,7 @@ GNEPOI::getMoveOperation() {
             (myNet->getViewNet()->getEditModes().networkEditMode == NetworkEditMode::NETWORK_MOVE) &&
             myNet->getViewNet()->getMouseButtonKeyPressed().shiftKeyPressed()) {
         // get snap radius
-        const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.additionalGeometryPointRadius;
+        const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.additionalGeometryPointRadius;
         // get mouse position
         const Position mousePosition = myNet->getViewNet()->getPositionInformation();
         // check if we're editing width or height
@@ -222,7 +224,7 @@ GNEPOI::updateCenteringBoundary(const bool updateGrid) {
 }
 
 
-void 
+void
 GNEPOI::splitEdgeGeometry(const double /*splitPosition*/, const GNENetworkElement* /*originalElement*/, const GNENetworkElement* /*newElement*/, GNEUndoList* /*undoList*/) {
     // nothing to split
 }

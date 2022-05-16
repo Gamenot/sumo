@@ -89,13 +89,13 @@ public:
     virtual void detach();
     /// @}
 
-    void loadOnStartup();
+    void loadOnStartup(const bool wait = false);
 
     GUIRunThread* getRunner() {
         return myRunThread;
     }
 
-    void dependentBuild();
+    void dependentBuild(const bool isLibsumo);
 
     void setStatusBarText(const std::string& text);
 
@@ -380,7 +380,7 @@ protected:
     /// @brief the submenus
     FXMenuPane* myFileMenu = nullptr, *myEditMenu = nullptr, *mySelectByPermissions = nullptr, *mySettingsMenu = nullptr,
                 *myLocatorMenu, *myControlMenu = nullptr,
-                                 *myWindowsMenu, *myHelpMenu = nullptr;
+                                 *myWindowMenu, *myHelpMenu = nullptr;
 
     /// @brief the menu cascades
     FXMenuCascade* mySelectLanesMenuCascade = nullptr;

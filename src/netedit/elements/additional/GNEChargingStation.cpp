@@ -17,6 +17,8 @@
 ///
 // A class for visualizing chargingStation geometry (adapted from GUILaneWrapper)
 /****************************************************************************/
+#include <config.h>
+
 #include <foreign/fontstash/fontstash.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNEUndoList.h>
@@ -106,7 +108,7 @@ GNEChargingStation::updateGeometry() {
     PositionVector tmpShape = myAdditionalGeometry.getShape();
 
     // Move shape to side
-    tmpShape.move2side(myNet->getViewNet()->getVisualisationSettings().stoppingPlaceSettings.stoppingPlaceSignOffset * offsetSign);
+    tmpShape.move2side(myNet->getViewNet()->getVisualisationSettings()->stoppingPlaceSettings.stoppingPlaceSignOffset * offsetSign);
 
     // Get position of the sign
     mySignPos = tmpShape.getLineCenter();

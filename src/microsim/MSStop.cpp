@@ -22,6 +22,7 @@
 
 #include <mesosim/MESegment.h>
 #include "MSLane.h"
+#include "MSNet.h"
 #include "MSParkingArea.h"
 #include "MSStoppingPlace.h"
 #include "MSStop.h"
@@ -33,7 +34,9 @@
 double
 MSStop::getEndPos(const SUMOVehicle& veh) const {
     const double brakePos = veh.getEdge() == getEdge() ? veh.getPositionOnLane() + veh.getBrakeGap() : 0;
-    if (busstop != nullptr) {
+    if ((pars.parametersSet & STOP_END_SET) != 0) {
+        return pars.endPos;
+    } else if (busstop != nullptr) {
         return busstop->getLastFreePos(veh, brakePos);
     } else if (containerstop != nullptr) {
         return containerstop->getLastFreePos(veh, brakePos);

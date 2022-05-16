@@ -62,6 +62,7 @@
 #include <utils/vehicle/SUMORouteLoaderControl.h>
 #include <utils/xml/XMLSubSys.h>
 #include <traci-server/TraCIServer.h>
+#include <libsumo/Helper.h>
 #include <libsumo/Simulation.h>
 #include <mesosim/MELoop.h>
 #include <mesosim/MESegment.h>
@@ -136,6 +137,8 @@ const std::string MSNet::STAGE_EVENTS("events");
 const std::string MSNet::STAGE_MOVEMENTS("move");
 const std::string MSNet::STAGE_LANECHANGE("laneChange");
 const std::string MSNet::STAGE_INSERTIONS("insertion");
+
+const NamedObjectCont<MSStoppingPlace*> MSNet::myEmptyStoppingPlaceCont;
 
 // ===========================================================================
 // static member method definitions
@@ -1278,7 +1281,7 @@ MSNet::getStoppingPlaces(SumoXMLTag category) const {
     if (it != myStoppingPlaces.end()) {
         return it->second;
     } else {
-        throw ProcessError("No stoppingPlace of type '" + toString(category) + "' found");
+        return myEmptyStoppingPlaceCont;
     }
 }
 

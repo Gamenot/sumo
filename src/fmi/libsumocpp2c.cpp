@@ -19,6 +19,13 @@
 // Implementation of the libsumo c++ to c wrapper
 /****************************************************************************/
 
+#ifdef _MSC_VER
+// Avoid warnings in windows build because of strcpy instead of strcpy_s,
+// because the latter is not available on all platforms
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable:4820 4514 5045)
+#endif
+
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
@@ -34,7 +41,7 @@
 inline char*
 allocateAndCopyString(ModelInstance* comp, const std::string& s) {
     char* buf = NULL;
-    buf = (char *)comp->allocateMemory(1 + s.length(), sizeof(char));
+    buf = (char*)comp->allocateMemory(1 + s.length(), sizeof(char));
     s.copy(buf, 1 + s.length());
     return buf;
 }

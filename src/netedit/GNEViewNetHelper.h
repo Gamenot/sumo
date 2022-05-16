@@ -229,6 +229,9 @@ struct GNEViewNetHelper {
         /// @brief get vector with clicked ACs
         const std::vector<GNEAttributeCarrier*>& getClickedAttributeCarriers() const;
 
+        /// @brief get vector with clicked Demand Elements
+        const std::vector<GNEDemandElement*>& getClickedDemandElements() const;
+
     protected:
         /// @brief objects container
         class ObjectsContainer {
@@ -774,7 +777,7 @@ struct GNEViewNetHelper {
         SumoXMLTag getGenericDataType() const;
 
         /// @brief get dataSet
-        GNEDataSet *getDataSet() const;
+        GNEDataSet* getDataSet() const;
 
         /// @brief get begin
         double getBegin() const;

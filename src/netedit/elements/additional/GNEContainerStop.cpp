@@ -17,6 +17,8 @@
 ///
 // A lane area vehicles can halt at (GNE version)
 /****************************************************************************/
+#include <config.h>
+
 #include <foreign/fontstash/fontstash.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNEUndoList.h>
@@ -105,7 +107,7 @@ GNEContainerStop::updateGeometry() {
     tmpShape.move2side(2);
     myAdditionalGeometry.updateGeometry(tmpShape);
     // Move shape to side
-    tmpShape.move2side(myNet->getViewNet()->getVisualisationSettings().stoppingPlaceSettings.stoppingPlaceSignOffset * offsetSign);
+    tmpShape.move2side(myNet->getViewNet()->getVisualisationSettings()->stoppingPlaceSettings.stoppingPlaceSignOffset * offsetSign);
     // Get position of the sign
     mySignPos = tmpShape.getLineCenter();
 }

@@ -18,6 +18,8 @@
 // A class for visualizing and editing POIS in netedit (adapted from
 // GUIPolygon and NLHandler)
 /****************************************************************************/
+#include <config.h>
+
 #include <string>
 #include <utils/gui/globjects/GUIGLObjectPopupMenu.h>
 #include <utils/gui/div/GLHelper.h>
@@ -39,9 +41,9 @@
 
 GNEPoly::GNEPoly(GNENet* net) :
     TesselatedPolygon("", "", RGBColor::BLACK, {}, false, false, 0, 0, 0, "", false, "", Parameterised::Map()),
-    GNEAdditional("", net, GLO_POLYGON, SUMO_TAG_POLY, "", 
-        {}, {}, {}, {}, {}, {}),
-    mySimplifiedShape(false) {
+                  GNEAdditional("", net, GLO_POLYGON, SUMO_TAG_POLY, "",
+                                {}, {}, {}, {}, {}, {}),
+mySimplifiedShape(false) {
     // reset default values
     resetDefaultValues();
 }
@@ -51,9 +53,9 @@ GNEPoly::GNEPoly(GNENet* net, const std::string& id, const std::string& type, co
                  const RGBColor& color, double layer, double angle, const std::string& imgFile, bool relativePath, const std::string& name,
                  const Parameterised::Map& parameters) :
     TesselatedPolygon(id, type, color, shape, geo, fill, lineWidth, layer, angle, imgFile, relativePath, name, parameters),
-    GNEAdditional(id, net, GLO_POLYGON, SUMO_TAG_POLY, "", 
-        {}, {}, {}, {}, {}, {}),
-    mySimplifiedShape(false) {
+    GNEAdditional(id, net, GLO_POLYGON, SUMO_TAG_POLY, "",
+{}, {}, {}, {}, {}, {}),
+mySimplifiedShape(false) {
     // check if imgFile is valid
     if (!imgFile.empty() && GUITexturesHelper::getTextureID(imgFile) == -1) {
         setShapeImgFile("");
@@ -88,7 +90,7 @@ GNEPoly::getMoveOperation() {
     } else {
         // calculate move shape operation
         return calculateMoveShapeOperation(myShape, myNet->getViewNet()->getPositionInformation(),
-                                           myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius, true);
+                                           myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius, true);
     }
 }
 
@@ -102,7 +104,7 @@ GNEPoly::removeGeometryPoint(const Position clickedPosition, GNEUndoList* undoLi
         // obtain index
         int index = shape.indexOfClosest(clickedPosition);
         // get snap radius
-        const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius;
+        const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius;
         // check if we have to create a new index
         if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
             // remove geometry point
@@ -159,7 +161,7 @@ GNEPoly::updateCenteringBoundary(const bool updateGrid) {
 }
 
 
-void 
+void
 GNEPoly::splitEdgeGeometry(const double /*splitPosition*/, const GNENetworkElement* /*originalElement*/, const GNENetworkElement* /*newElement*/, GNEUndoList* /*undoList*/) {
     // nothing to split
 }
@@ -357,7 +359,7 @@ GNEPoly::getVertexIndex(Position pos, bool snapToGrid) {
     }
     // first check if vertex already exists
     for (const auto& shapePosition : myShape) {
-        if (shapePosition.distanceTo2D(pos) < myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.polygonGeometryPointRadius) {
+        if (shapePosition.distanceTo2D(pos) < myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.polygonGeometryPointRadius) {
             return myShape.indexOfClosest(shapePosition);
         }
     }
@@ -570,7 +572,7 @@ GNEPoly::getAttribute(SumoXMLAttr key) const {
 }
 
 
-double 
+double
 GNEPoly::getAttributeDouble(SumoXMLAttr key) const {
     throw InvalidArgument(getTagStr() + " attribute '" + toString(key) + "' not allowed");
 }

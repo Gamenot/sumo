@@ -41,7 +41,6 @@
 #include "MSGlobals.h"
 #include "MSLeaderInfo.h"
 #include "MSMoveReminder.h"
-#include <libsumo/Helper.h>
 
 #include <utils/foxtools/FXSynchQue.h>
 #ifdef HAVE_FOX
@@ -54,6 +53,7 @@
 // class declarations
 // ===========================================================================
 class MSEdge;
+class MSBaseVehicle;
 class MSVehicle;
 class MSLaneChanger;
 class MSLink;
@@ -61,13 +61,15 @@ class MSVehicleTransfer;
 class MSVehicleControl;
 class OutputDevice;
 class MSLeaderInfo;
+class MSJunction;
 
 
 // ===========================================================================
 // type definitions
 // ===========================================================================
+#define LANE_RTREE_QUAL RTree<MSLane*, MSLane, float, 2, MSLane::StoringVisitor>
 /// Coverage info
-typedef std::map<const MSLane*, std::pair<double, double> >  LaneCoverageInfo; // also declared in libsumo/Helper.h!
+typedef std::map<const MSLane*, std::pair<double, double> >  LaneCoverageInfo;
 
 // ===========================================================================
 // class definitions
@@ -81,6 +83,31 @@ typedef std::map<const MSLane*, std::pair<double, double> >  LaneCoverageInfo; /
  */
 class MSLane : public Named, public Parameterised {
 public:
+    class StoringVisitor {
+    public:
+        /// @brief Constructor
+        StoringVisitor(std::set<const Named*>& objects, const PositionVector& shape,
+            const double range, const int domain)
+            : myObjects(objects), myShape(shape), myRange(range), myDomain(domain) {}
+
+        /// @brief Adds the given object to the container
+        void add(const MSLane* const l) const;
+
+    private:
+        /// @brief The container
+        std::set<const Named*>& myObjects;
+        const PositionVector& myShape;
+        const double myRange;
+        const int myDomain;
+
+    private:
+        /// @brief invalidated copy constructor
+        StoringVisitor(const StoringVisitor& src);
+
+        /// @brief invalidated assignment operator
+        StoringVisitor& operator=(const StoringVisitor& src);
+    };
+
     /// needs access to myTmpVehicles (this maybe should be done via double-buffering!!!)
     friend class MSLaneChanger;
     friend class MSLaneChangerSublane;
@@ -857,7 +884,7 @@ public:
     /// @brief Set vehicle class specific stopOffsets
     void setLaneStopOffset(const StopOffset& stopOffset);
 
-    /** @enum MinorLinkMode 
+    /** @enum MinorLinkMode
      * @brief determine whether/how getFollowers looks upstream beyond minor links
      */
     enum MinorLinkMode {
@@ -963,9 +990,9 @@ public:
     /// @note  Does not consider vehs with front on subsequent lanes
     std::set<MSVehicle*> getVehiclesInRange(const double a, const double b) const;
 
-
     /// @brief Returns all upcoming junctions within given range along the given (non-internal) continuation lanes measured from given position
     std::vector<const MSJunction*> getUpcomingJunctions(double pos, double range, const std::vector<MSLane*>& contLanes) const;
+
     /// @brief Returns all upcoming links within given range along the given (non-internal) continuation lanes measured from given position
     std::vector<const MSLink*> getUpcomingLinks(double pos, double range, const std::vector<MSLane*>& contLanes) const;
 
@@ -1243,7 +1270,7 @@ public:
      * @param[in] cont The context doing all the work
      * @see libsumo::Helper::LaneStoringVisitor::add
      */
-    void visit(const LaneStoringVisitor& cont) const {
+    void visit(const MSLane::StoringVisitor& cont) const {
         cont.add(this);
     }
 
@@ -1556,8 +1583,6 @@ private:
         int operator()(const MSEdge* const e1, const MSEdge* const e2) const;
 
     private:
-        by_connections_to_sorter& operator=(const by_connections_to_sorter&) = delete; // just to avoid a compiler warning
-    private:
         const MSEdge* const myEdge;
         double myLaneDir;
     };
@@ -1577,8 +1602,6 @@ private:
         int operator()(const IncomingLaneInfo& lane1, const IncomingLaneInfo& lane2) const;
 
     private:
-        incoming_lane_priority_sorter& operator=(const incoming_lane_priority_sorter&) = delete; // just to avoid a compiler warning
-    private:
         const MSLane* const myLane;
         double myLaneDir;
     };
@@ -1597,8 +1620,6 @@ private:
         int operator()(const MSLink* link1, const MSLink* link2) const;
 
     private:
-        outgoing_lane_priority_sorter& operator=(const outgoing_lane_priority_sorter&) = delete; // just to avoid a compiler warning
-    private:
         double myLaneDir;
     };
 
@@ -1611,8 +1632,6 @@ private:
         bool operator()(const IncomingLaneInfo& ili) const {
             return &(ili.lane->getEdge()) == myEdge;
         }
-    private:
-        edge_finder& operator=(const edge_finder&) = delete; // just to avoid a compiler warning
     private:
         const MSEdge* const myEdge;
     };

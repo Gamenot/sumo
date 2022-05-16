@@ -23,6 +23,7 @@
 class editElements:
     overlapped = 5
 
+
 class selection:
     class lockSelectionNetwork:
         junctions = 1
@@ -62,6 +63,14 @@ class frames:
         create = 15
         abort = 16
         removeLastInsertedEdge = 17
+
+
+class fix:
+    class demandElements:
+        class routes:
+            removeStops = 1
+            selectInvalidRoutes = 2
+            saveInvalidRoutes = 3
 
 # --------------------------------
 # NETWORK
@@ -190,6 +199,11 @@ class edge:
         stopExceptionButton = 18
         stopException = 19
         parameters = 22
+
+    class template:
+        create = 33
+        copy = 34
+        clear = 35
 
 # lane
 
@@ -1170,6 +1184,7 @@ class TAZ:
 
 # type
 
+
 class type:
     class buttons:
         create = 2
@@ -2145,9 +2160,20 @@ class person:
 
     class inspect:
         id = 1
+        type = 2
+        colorButton = 3
+        color = 4
+        departPos = 5
+        depart = 6
+        parameters = 9
 
     class inspectSelection:
         type = 1
+        colorButton = 2
+        color = 3
+        departPos = 4
+        depart = 5
+        parameters = 8
 
 
 class personFlow:
@@ -2157,12 +2183,38 @@ class personFlow:
         color = 10
         departPos = 11
         begin = 12
+        terminate = 16
+        end = 18
+        number = 19
+        spacing = 18
+        terminateOption = 20
+        spacingOption = 21
 
     class inspect:
         id = 1
+        type = 2
+        colorButton = 3
+        color = 4
+        departPos = 5
+        begin = 6
+        terminate = 9
+        spacing = 11
+        end = 12
+        terminateOption = 13
+        spacingOption = 14
+        parameters = 16
 
     class inspectSelection:
         type = 1
+        colorButton = 2
+        color = 3
+        departPos = 4
+        begin = 5
+        terminate = 8
+        spacing = 10
+        terminateOption = 12
+        spacingOption = 13
+        parameters = 15
 
 
 # --------------------------------

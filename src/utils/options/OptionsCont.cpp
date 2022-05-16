@@ -34,15 +34,16 @@
 #include <cstring>
 #include <cerrno>
 #include <iterator>
-#include "Option.h"
-#include "OptionsCont.h"
+#include <sstream>
 #include <utils/common/UtilExceptions.h>
 #include <utils/common/FileHelpers.h>
 #include <utils/common/MsgHandler.h>
 #include <utils/common/StringTokenizer.h>
 #include <utils/common/StringUtils.h>
 #include <utils/xml/SUMOSAXAttributes.h>
-#include <sstream>
+#include "Option.h"
+#include "OptionsIO.h"
+#include "OptionsCont.h"
 
 
 // ===========================================================================
@@ -146,20 +147,6 @@ OptionsCont::isSet(const std::string& name, bool failOnNonExistant) const {
 }
 
 
-void
-OptionsCont::unSet(const std::string& name, bool failOnNonExistant) const {
-    KnownContType::const_iterator i = myValues.find(name);
-    if (i == myValues.end()) {
-        if (failOnNonExistant) {
-            throw ProcessError("Internal request for unknown option '" + name + "'!");
-        } else {
-            return;
-        }
-    }
-    (*i).second->unSet();
-}
-
-
 bool
 OptionsCont::isDefault(const std::string& name) const {
     KnownContType::const_iterator i = myValues.find(name);
@@ -245,6 +232,7 @@ OptionsCont::getStringVector(const std::string& name) const {
     return o->getStringVector();
 }
 
+
 bool
 OptionsCont::set(const std::string& name, const std::string& value) {
     Option* o = getSecure(name);
@@ -253,7 +241,8 @@ OptionsCont::set(const std::string& name, const std::string& value) {
         return false;
     }
     try {
-        if (!o->set(value)) {
+        // Substitute environment variables defined by ${NAME} with their value
+        if (!o->set(StringUtils::substituteEnvironment(value, &OptionsIO::getLoadTime()))) {
             return false;
         }
     } catch (ProcessError& e) {
@@ -266,8 +255,9 @@ OptionsCont::set(const std::string& name, const std::string& value) {
 
 bool
 OptionsCont::setDefault(const std::string& name, const std::string& value) {
-    if (set(name, value)) {
-        getSecure(name)->resetDefault();
+    Option* const o = getSecure(name);
+    if (o->isWriteable() && set(name, value)) {
+        o->resetDefault();
         return true;
     }
     return false;
@@ -934,15 +924,15 @@ OptionsCont::writeXMLHeader(std::ostream& os, const bool includeConfig) const {
     os << buffer << myFullName << "\n";
     if (myWriteLicense) {
         os << "This data file and the accompanying materials\n"
-              "are made available under the terms of the Eclipse Public License v2.0\n"
-              "which accompanies this distribution, and is available at\n"
-              "http://www.eclipse.org/legal/epl-v20.html\n"
-              "This file may also be made available under the following Secondary\n"
-              "Licenses when the conditions for such availability set forth in the Eclipse\n"
-              "Public License 2.0 are satisfied: GNU General Public License, version 2\n"
-              "or later which is available at\n"
-              "https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html\n"
-              "SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later\n";
+           "are made available under the terms of the Eclipse Public License v2.0\n"
+           "which accompanies this distribution, and is available at\n"
+           "http://www.eclipse.org/legal/epl-v20.html\n"
+           "This file may also be made available under the following Secondary\n"
+           "Licenses when the conditions for such availability set forth in the Eclipse\n"
+           "Public License 2.0 are satisfied: GNU General Public License, version 2\n"
+           "or later which is available at\n"
+           "https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html\n"
+           "SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-or-later\n";
     }
     if (includeConfig) {
         writeConfiguration(os, true, false, false, "", false, true);

@@ -484,16 +484,16 @@ TraCIServerAPI_Vehicle::processSet(TraCIServer& server, tcpip::Storage& inputSto
                 libsumo::Vehicle::setStop(id, edgeID, pos, laneIndex, duration, stopFlags, startPos, until);
             }
             break;
-            case libsumo::CMD_REPLACE_STOP: 
+            case libsumo::CMD_REPLACE_STOP:
                 if (!insertReplaceStop(server, inputStorage, outputStorage, id, true)) {
                     return false;
                 }
-            break;
-            case libsumo::CMD_INSERT_STOP: 
+                break;
+            case libsumo::CMD_INSERT_STOP:
                 if (!insertReplaceStop(server, inputStorage, outputStorage, id, false)) {
                     return false;
                 }
-            break;
+                break;
             case libsumo::VAR_STOP_PARAMETER: {
                 // read variables
                 if (inputStorage.readUnsignedByte() != libsumo::TYPE_COMPOUND) {
@@ -880,9 +880,6 @@ TraCIServerAPI_Vehicle::processSet(TraCIServer& server, tcpip::Storage& inputSto
                     }
                 } else {
                     return server.writeErrorStatusCmd(libsumo::CMD_SET_VEHICLE_VARIABLE, "Setting acceleration requires 2 parameters as compound object description.", outputStorage);
-                }
-                if (accel < 0) {
-                    return server.writeErrorStatusCmd(libsumo::CMD_SET_VEHICLE_VARIABLE, "Acceleration must not be negative.", outputStorage);
                 }
                 if (duration < 0) {
                     return server.writeErrorStatusCmd(libsumo::CMD_SET_VEHICLE_VARIABLE, "Duration must not be negative.", outputStorage);

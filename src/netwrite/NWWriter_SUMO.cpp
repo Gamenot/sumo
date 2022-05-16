@@ -159,10 +159,10 @@ NWWriter_SUMO::writeNetwork(const OptionsCont& oc, NBNetBuilder& nb) {
     int numConnections = 0;
     for (std::map<std::string, NBEdge*>::const_iterator it_edge = ec.begin(); it_edge != ec.end(); it_edge++) {
         NBEdge* from = it_edge->second;
-        const std::vector<NBEdge::Connection> connections = from->getConnections();
+        const std::vector<NBEdge::Connection>& connections = from->getConnections();
         numConnections += (int)connections.size();
-        for (std::vector<NBEdge::Connection>::const_iterator it_c = connections.begin(); it_c != connections.end(); it_c++) {
-            writeConnection(device, *from, *it_c, includeInternal);
+        for (const NBEdge::Connection& con : connections) {
+            writeConnection(device, *from, con, includeInternal);
         }
     }
     if (numConnections > 0) {
@@ -1010,6 +1010,22 @@ NWWriter_SUMO::writeTrafficLight(OutputDevice& into, const NBTrafficLightLogic* 
             }
             if (phase.maxDur != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
                 into.writeAttr(SUMO_ATTR_MAXDURATION, writeSUMOTime(phase.maxDur));
+            }
+            if (phase.earliestEnd != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
+                into.writeAttr(SUMO_ATTR_EARLIEST_END, writeSUMOTime(phase.earliestEnd));
+            }
+            if (phase.latestEnd != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
+                into.writeAttr(SUMO_ATTR_LATEST_END, writeSUMOTime(phase.latestEnd));
+            }
+            // NEMA attributes
+            if (phase.vehExt != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
+                into.writeAttr(SUMO_ATTR_VEHICLEEXTENSION, writeSUMOTime(phase.vehExt));
+            }
+            if (phase.yellow != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
+                into.writeAttr(SUMO_ATTR_YELLOW, writeSUMOTime(phase.yellow));
+            }
+            if (phase.red != NBTrafficLightDefinition::UNSPECIFIED_DURATION) {
+                into.writeAttr(SUMO_ATTR_RED, writeSUMOTime(phase.red));
             }
         }
         if (phase.name != "") {

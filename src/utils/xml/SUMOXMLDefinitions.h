@@ -533,6 +533,7 @@ enum SumoXMLAttr {
     SUMO_ATTR_LEADER_GAP         = 59,
     SUMO_ATTR_VEHICLE            = 60,
     SUMO_ATTR_ODOMETER           = 61,
+    SUMO_ATTR_POSITION_LAT       = 62,
     /// @}
 
     /// @name common attributes
@@ -791,7 +792,7 @@ enum SumoXMLAttr {
     /// @{
     SUMO_ATTR_SIGMA,      // used by: Krauss
     SUMO_ATTR_SIGMA_STEP, // used by: Krauss
-    SUMO_ATTR_STARTUP_DELAY, 
+    SUMO_ATTR_STARTUP_DELAY,
     SUMO_ATTR_TAU,
     SUMO_ATTR_TMP1,
     SUMO_ATTR_TMP2,
@@ -938,7 +939,6 @@ enum SumoXMLAttr {
     /// @name source definitions
     /// @{
     SUMO_ATTR_FUNCTION,
-    SUMO_ATTR_POSITION_LAT,
     SUMO_ATTR_FREQUENCY,
     SUMO_ATTR_STYLE,
     SUMO_ATTR_FILE,

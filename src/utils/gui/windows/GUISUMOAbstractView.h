@@ -139,6 +139,9 @@ public:
     /// @brief get visible boundary
     Boundary getVisibleBoundary() const;
 
+    /// @brief return whether this is a 3D view
+    virtual bool is3DView() const;
+
     /// @brief mouse functions
     //@{
     virtual long onConfigure(FXObject*, FXSelector, void*);
@@ -221,7 +224,7 @@ public:
     virtual bool setColorScheme(const std::string&);
 
     /// @brief get visualization settings
-    GUIVisualizationSettings& getVisualisationSettings() const;
+    GUIVisualizationSettings* getVisualisationSettings() const;
 
     /// @brief recalibrate color scheme according to the current value range
     virtual void buildColorRainbow(const GUIVisualizationSettings& /*s*/, GUIColorScheme& /*scheme*/, int /*active*/, GUIGlObjectType /*objectType*/,

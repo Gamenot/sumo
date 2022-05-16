@@ -17,6 +17,8 @@
 ///
 // A abstract class to define common parameters of lane area in which vehicles can halt (GNE version)
 /****************************************************************************/
+#include <config.h>
+
 #include <foreign/fontstash/fontstash.h>
 #include <netedit/GNENet.h>
 #include <netedit/GNEUndoList.h>
@@ -47,11 +49,11 @@ GNEStoppingPlace::GNEStoppingPlace(const std::string& id, GNENet* net, GUIGlObje
                                    GNELane* lane, const double startPos, const double endPos, const std::string& name,
                                    bool friendlyPosition, const Parameterised::Map& parameters) :
     GNEAdditional(id, net, type, tag, name,
-        {}, {}, {lane}, {}, {}, {}),
-    Parameterised(parameters),
-    myStartPosition(startPos),
-    myEndPosition(endPos),
-    myFriendlyPosition(friendlyPosition) {
+{}, {}, {lane}, {}, {}, {}),
+Parameterised(parameters),
+myStartPosition(startPos),
+myEndPosition(endPos),
+myFriendlyPosition(friendlyPosition) {
 }
 
 
@@ -67,7 +69,7 @@ GNEStoppingPlace::getMoveOperation() {
             (myNet->getViewNet()->getEditModes().networkEditMode == NetworkEditMode::NETWORK_MOVE) &&
             myNet->getViewNet()->getMouseButtonKeyPressed().shiftKeyPressed()) {
         // get snap radius
-        const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.additionalGeometryPointRadius;
+        const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.additionalGeometryPointRadius;
         // get mouse position
         const Position mousePosition = myNet->getViewNet()->getPositionInformation();
         // check if we clicked over start or end position
@@ -268,7 +270,7 @@ GNEStoppingPlace::getAttributeDouble(SumoXMLAttr key) const {
 }
 
 
-const Parameterised::Map& 
+const Parameterised::Map&
 GNEStoppingPlace::getACParametersMap() const {
     return getParametersMap();
 }

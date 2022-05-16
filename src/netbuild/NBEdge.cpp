@@ -697,10 +697,6 @@ NBEdge::setNodeBorder(const NBNode* node, const Position& p, const Position& p2,
         border.push_back(p2);
     }
     if (border.size() == 2) {
-        double edgeWidth = 0;
-        for (int i = 0; i < (int)myLanes.size(); i++) {
-            edgeWidth += getLaneWidth(i);
-        }
         border.extrapolate2D(getTotalWidth());
         if (node == myFrom) {
             myFromBorder = border;
@@ -1222,28 +1218,23 @@ NBEdge::getConnectionsFromLane(int lane, NBEdge* to, int toLane) const {
 }
 
 
-NBEdge::Connection
+const NBEdge::Connection&
 NBEdge::getConnection(int fromLane, const NBEdge* to, int toLane) const {
-    for (std::vector<Connection>::const_iterator i = myConnections.begin(); i != myConnections.end(); ++i) {
-        if (
-            (*i).fromLane == fromLane
-            && (*i).toEdge == to
-            && (*i).toLane == toLane) {
-            return *i;
+    for (const Connection& c : myConnections) {
+        if (c.fromLane == fromLane && c.toEdge == to && c.toLane == toLane) {
+            return c;
         }
     }
     throw ProcessError("Connection from " + getID() + "_" + toString(fromLane)
                        + " to " + to->getID() + "_" + toString(toLane) + " not found");
 }
 
+
 NBEdge::Connection&
 NBEdge::getConnectionRef(int fromLane, const NBEdge* to, int toLane) {
-    for (std::vector<Connection>::iterator i = myConnections.begin(); i != myConnections.end(); ++i) {
-        if (
-            (*i).fromLane == fromLane
-            && (*i).toEdge == to
-            && (*i).toLane == toLane) {
-            return *i;
+    for (Connection& c : myConnections) {
+        if (c.fromLane == fromLane && c.toEdge == to && c.toLane == toLane) {
+            return c;
         }
     }
     throw ProcessError("Connection from " + getID() + "_" + toString(fromLane)
@@ -3405,9 +3396,7 @@ void
 NBEdge::moveOutgoingConnectionsFrom(NBEdge* e, int laneOff) {
     int lanes = e->getNumLanes();
     for (int i = 0; i < lanes; i++) {
-        std::vector<NBEdge::Connection> elv = e->getConnectionsFromLane(i);
-        for (std::vector<NBEdge::Connection>::iterator j = elv.begin(); j != elv.end(); j++) {
-            NBEdge::Connection el = *j;
+        for (const NBEdge::Connection& el : e->getConnectionsFromLane(i)) {
             assert(el.tlID == "");
             addLane2LaneConnection(i + laneOff, el.toEdge, el.toLane, Lane2LaneInfoType::COMPUTED);
         }
@@ -3637,7 +3626,11 @@ NBEdge::expandableBy(NBEdge* possContinuation, std::string& reason) const {
         }
     }
     // if given identically osm names
-    if (!OptionsCont::getOptions().isDefault("output.street-names") && myStreetName != possContinuation->getStreetName()) {
+    if (!OptionsCont::getOptions().isDefault("output.street-names") && myStreetName != possContinuation->getStreetName()
+            && ((myStreetName != "" && possContinuation->getStreetName() != "")
+                // only permit merging a short unnamed road with a longer named road
+                || (myStreetName != "" && myLength <= possContinuation->getLength())
+                || (myStreetName == "" && myLength >= possContinuation->getLength()))) {
         return false;
     }
 
@@ -3667,6 +3660,10 @@ NBEdge::append(NBEdge* e) {
         // make sure to use the attributes from the longer edge
         for (int i = 0; i < (int)myLanes.size(); i++) {
             myLanes[i].width = e->myLanes[i].width;
+        }
+        // defined name prevails over undefined name of shorter road
+        if (myStreetName == "") {
+            myStreetName = e->myStreetName;
         }
     }
     // recompute length
@@ -3903,12 +3900,13 @@ NBEdge::getInternalLaneWidth(
     const NBEdge::Lane& successor,
     bool isVia) const {
 
-    if (!isVia && node.isConstantWidthTransition() && getNumLanes() > connection.toEdge->getNumLanes())
+    if (!isVia && node.isConstantWidthTransition() && getNumLanes() > connection.toEdge->getNumLanes()) {
         return getLaneWidth(connection.fromLane);
+    }
 
     return (isBikepath(getPermissions(connection.fromLane)) && (
-            getLaneWidth(connection.fromLane) < successor.width || successor.width == UNSPECIFIED_WIDTH)) ?
-            myLanes[connection.fromLane].width : successor.width; // getLaneWidth(connection.fromLane) never returns -1 (UNSPECIFIED_WIDTH)
+                getLaneWidth(connection.fromLane) < successor.width || successor.width == UNSPECIFIED_WIDTH)) ?
+           myLanes[connection.fromLane].width : successor.width; // getLaneWidth(connection.fromLane) never returns -1 (UNSPECIFIED_WIDTH)
 }
 
 double

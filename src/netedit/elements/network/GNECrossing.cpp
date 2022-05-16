@@ -38,19 +38,19 @@
 
 GNECrossing::GNECrossing(GNENet* net) :
     GNENetworkElement(net, "", GLO_CROSSING, SUMO_TAG_CROSSING,
-        {}, {}, {}, {}, {}, {}),
-    myParentJunction(nullptr),
-    myTemplateNBCrossing(new NBNode::Crossing(nullptr, {}, 0, false, 0, 0, {})) {
+{}, {}, {}, {}, {}, {}),
+myParentJunction(nullptr),
+myTemplateNBCrossing(new NBNode::Crossing(nullptr, {}, 0, false, 0, 0, {})) {
     // reset default values
     resetDefaultValues();
 }
 
 GNECrossing::GNECrossing(GNEJunction* parentJunction, std::vector<NBEdge*> crossingEdges) :
     GNENetworkElement(parentJunction->getNet(), parentJunction->getNBNode()->getCrossing(crossingEdges)->id, GLO_CROSSING, SUMO_TAG_CROSSING,
-        {}, {}, {}, {}, {}, {}),
-    myParentJunction(parentJunction),
-    myCrossingEdges(crossingEdges),
-    myTemplateNBCrossing(nullptr) {
+{}, {}, {}, {}, {}, {}),
+myParentJunction(parentJunction),
+myCrossingEdges(crossingEdges),
+myTemplateNBCrossing(nullptr) {
     // update centering boundary without updating grid
     updateCenteringBoundary(false);
 }
@@ -91,7 +91,7 @@ GNECrossing::getMoveOperation() {
     if (isShapeEdited()) {
         // calculate move shape operation
         return calculateMoveShapeOperation(getCrossingShape(), myNet->getViewNet()->getPositionInformation(),
-                                           myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.crossingGeometryPointRadius, true);
+                                           myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.crossingGeometryPointRadius, true);
     } else {
         return nullptr;
     }
@@ -109,7 +109,7 @@ GNECrossing::removeGeometryPoint(const Position clickedPosition, GNEUndoList* un
             // obtain index
             int index = shape.indexOfClosest(clickedPosition);
             // get snap radius
-            const double snap_radius = myNet->getViewNet()->getVisualisationSettings().neteditSizeSettings.crossingGeometryPointRadius;
+            const double snap_radius = myNet->getViewNet()->getVisualisationSettings()->neteditSizeSettings.crossingGeometryPointRadius;
             // check if we have to create a new index
             if ((index != -1) && shape[index].distanceSquaredTo2D(clickedPosition) < (snap_radius * snap_radius)) {
                 // remove geometry point

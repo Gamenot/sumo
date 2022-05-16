@@ -61,6 +61,7 @@ class NBVehicle;
  */
 class NBRouterEdge {
 public:
+    virtual ~NBRouterEdge() {}
     virtual const std::string& getID() const = 0;
     virtual double getSpeed() const = 0;
     virtual double getLength() const = 0;
@@ -645,10 +646,10 @@ public:
      * @todo validity checks
      */
     double getInternalLaneWidth(
-            const NBNode& node,
-            const NBEdge::Connection& connection,
-            const NBEdge::Lane& successor,
-            bool isVia) const;
+        const NBNode& node,
+        const NBEdge::Connection& connection,
+        const NBEdge::Lane& successor,
+        bool isVia) const;
 
     /// @brief Returns the combined width of all lanes of this edge
     double getTotalWidth() const;
@@ -984,11 +985,11 @@ public:
      */
     std::vector<Connection> getConnectionsFromLane(int lane, NBEdge* to = nullptr, int toLane = -1) const;
 
-    /** @brief Returns the specified connection
+    /** @brief Returns the specified connection (unmodifiable)
      * This method goes through "myConnections" and returns the specified one
      * @see NBEdge::Connection
      */
-    Connection getConnection(int fromLane, const NBEdge* to, int toLane) const;
+    const Connection& getConnection(int fromLane, const NBEdge* to, int toLane) const;
 
     /** @brief Returns reference to the specified connection
      * This method goes through "myConnections" and returns the specified one
@@ -1818,10 +1819,6 @@ public:
 
         /// @brief edge to find
         const NBEdge* const myEdge2Find;
-
-    private:
-        /// @brief invalidated assignment operator
-        connections_toedge_finder& operator=(const connections_toedge_finder& s) = delete;
     };
 
     /// @class connections_toedgelane_finder
@@ -1847,10 +1844,6 @@ public:
 
         /// @brief from lane to find
         int myFromLane2Find;
-
-    private:
-        /// @brief invalidated assignment operator
-        connections_toedgelane_finder& operator=(const connections_toedgelane_finder& s) = delete;
     };
 
     /// @class connections_finder
@@ -1879,10 +1872,6 @@ public:
 
         /// @brief invert edge to find
         bool myInvertEdge2find;
-
-    private:
-        /// @brief invalidated assignment operator
-        connections_finder& operator=(const connections_finder& s) = delete;
     };
 
     /// @class connections_conflict_finder
@@ -1908,10 +1897,6 @@ public:
 
         /// @brief check if is right
         bool myCheckRight;
-
-    private:
-        /// @brief invalidated assignment operator
-        connections_conflict_finder& operator=(const connections_conflict_finder& s) = delete;
     };
 
     /// @class connections_fromlane_finder

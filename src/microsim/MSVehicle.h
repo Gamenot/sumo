@@ -1681,7 +1681,7 @@ public:
     static int nextLinkPriority(const std::vector<MSLane*>& conts);
 
     /// @brief whether the given vehicle must be followed at the given junction
-    bool isLeader(const MSLink* link, const MSVehicle* veh) const;
+    bool isLeader(const MSLink* link, const MSVehicle* veh, const double gap) const;
 
     // @brief get the position of the back bumper;
     const Position getBackPosition() const;
@@ -2013,9 +2013,13 @@ protected:
 
 public:
     void adaptToJunctionLeader(const std::pair<const MSVehicle*, double> leaderInfo,
-                       const double seen, DriveProcessItem* const lastLink,
-                       const MSLane* const lane, double& v, double& vLinkPass,
-                       double distToCrossing = -1) const;
+                               const double seen, DriveProcessItem* const lastLink,
+                               const MSLane* const lane, double& v, double& vLinkPass,
+                               double distToCrossing = -1) const;
+
+    /// @brief decide whether a red (or yellow light) may be ignore
+    bool ignoreRed(const MSLink* link, bool canBrake) const;
+
 protected:
 
     /* @brief adapt safe velocity in accordance to multiple vehicles ahead:
@@ -2063,9 +2067,6 @@ protected:
     /// @brief decide whether the given link must be kept clear
     bool keepClear(const MSLink* link) const;
 
-    /// @brief decide whether a red (or yellow light) may be ignore
-    bool ignoreRed(const MSLink* link, bool canBrake) const;
-
     double estimateTimeToNextStop() const;
 
     /* @brief special considerations for opposite direction driving so that the
@@ -2082,6 +2083,9 @@ protected:
 
 
     SUMOTime getArrivalTime(SUMOTime t, double seen, double v, double arrivalSpeed) const;
+
+    /// @brief whether the give lane is reverse direction of the current route or not
+    bool isOppositeLane(const MSLane* lane) const;
 
 private:
     /// @brief The per vehicle variables of the car following model
